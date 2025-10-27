@@ -4,19 +4,19 @@ class ProductDto {
   final String name;
   final String? description;
   final double price;
-  final int stock;
   final String? imageUrl;
   final bool active;
+  final int stock; // 👈 añadimos stock
 
   ProductDto({
     required this.id,
     required this.companyId,
     required this.name,
-    required this.description,
+    this.description,
     required this.price,
-    required this.stock,
-    required this.imageUrl,
+    this.imageUrl,
     required this.active,
+    required this.stock, // 👈 añadimos
   });
 
   factory ProductDto.fromJson(Map<String, dynamic> j) => ProductDto(
@@ -25,8 +25,8 @@ class ProductDto {
         name: j['name'],
         description: j['description'],
         price: (j['price'] as num).toDouble(),
-        stock: j['stock'],
         imageUrl: j['imageUrl'],
         active: j['active'],
+        stock: j['stock'] ?? 0, // 👈 si no viene en JSON, queda en 0
       );
 }

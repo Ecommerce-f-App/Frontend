@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'state/auth_state.dart';
+import 'state/cart_state.dart';
 import 'ui/pages/login_page.dart';
 import 'ui/pages/admin_companies_page.dart';
 import 'ui/pages/company_products_page.dart';
 import 'ui/pages/catalog_page.dart';
+import 'ui/pages/cart_page.dart';
 
 void main() {
   runApp(const EcommerceUpsaApp());
@@ -29,7 +31,7 @@ class _EcommerceUpsaAppState extends State<EcommerceUpsaApp> {
   void initState() {
     super.initState();
     _router = GoRouter(
-      navigatorKey: navigatorKey, // aquí va el key
+      navigatorKey: navigatorKey,
       initialLocation: '/login',
       refreshListenable: _RouterAuthListenable(),
       routes: [
@@ -37,6 +39,7 @@ class _EcommerceUpsaAppState extends State<EcommerceUpsaApp> {
         GoRoute(path: '/admin/companies', builder: (_, __) => const AdminCompaniesPage()),
         GoRoute(path: '/company/products', builder: (_, __) => const CompanyProductsPage()),
         GoRoute(path: '/catalog', builder: (_, __) => const CatalogPage()),
+        GoRoute(path: '/cart', builder: (_, __) => const CartPage()),
       ],
       redirect: (context, state) {
         final auth = _RouterAuthListenable.currentAuth;
@@ -48,7 +51,7 @@ class _EcommerceUpsaAppState extends State<EcommerceUpsaApp> {
 
         bool isAdminRoute() => path.startsWith('/admin');
         bool isCompanyRoute() => path.startsWith('/company');
-        bool isCatalogRoute() => path.startsWith('/catalog');
+        bool isClientRoute() => path.startsWith('/catalog') || path.startsWith('/cart');
 
         // No logueado: solo puede estar en /login
         if (!logged) return loggingIn ? null : '/login';
@@ -64,7 +67,7 @@ class _EcommerceUpsaAppState extends State<EcommerceUpsaApp> {
         // Ya logueado: si entra a un lugar que no es de su rol, reubícalo
         if (role == 0 && !isAdminRoute()) return '/admin/companies';
         if (role == 1 && !isCompanyRoute()) return '/company/products';
-        if (role == 2 && !isCatalogRoute()) return '/catalog';
+        if (role == 2 && !isClientRoute()) return '/catalog';
 
         return null; // todo ok, no redirigir
       },
@@ -73,14 +76,16 @@ class _EcommerceUpsaAppState extends State<EcommerceUpsaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthState()..loadMe(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthState()..loadMe()),
+        ChangeNotifierProvider(create: (_) => CartState()..refresh()), // 👈 badge listo
+      ],
       child: MaterialApp.router(
         title: 'EcommerceUpsa',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
         routerConfig: _router,
-        // nota: MaterialApp.router no lleva navigatorKey; ya lo pusimos en GoRouter
       ),
     );
   }
